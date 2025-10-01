@@ -1,106 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to My Webpage</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
-        h1 { color: #2c3e50; }
-        p { color: #555; }
-    </style>
-</head>
-<body>
-    <h1>Hello, World!</h1>
-    <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Spades Arcade — Classic & 60-Second</title>
-<meta name="description" content="Play Spades in Classic mode or blaze through 60-Second Arcade rounds. Clean UI, smart AI, clear turn & trick indicators." />
-<style>
-  :root{
-    --ink:#0b1220;--felt:#0a5a2b;--paper:#f7fafc;
-    --teamNS:#22c55e;--teamNS-ink:#062e18;
-    --teamEW:#ec4899;--teamEW-ink:#3b0b1f;
-    --glow1:#00e1ff;--glow2:#a855f7;--danger:#ff5a5a;
-    --ok:#10b981;--muted:#5b6b8a;
-  }
-  html,body{height:100%;margin:0;background:var(--paper);color:var(--ink);
-    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-  .hidden{display:none!important}
-  /* Welcome */
-  #welcome{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;z-index:10;background:var(--paper)}
-  .hero{width:min(960px,94vw);padding:48px;border-radius:28px;background:
-    radial-gradient(1100px 680px at 5% 8%,#fff 0%,#eff9ff 38%,transparent 65%),
-    radial-gradient(900px 600px at 90% 25%,#ffe8fb 0%,#e7f5ff 40%,transparent 70%),
-    linear-gradient(180deg,#fff 0%,#f3f9fe 60%,#f0fff9 100%);
-    border:1px solid rgba(14,18,40,.06);box-shadow:0 20px 60px rgba(14,18,40,.12)}
-  .hero h1{margin:0 0 6px;font-size:2.6rem;letter-spacing:-.02em}
-  .hero h2{margin:0 0 14px;font-weight:600;color:var(--muted)}
-  .hero p{margin:0 auto 22px;max-width:640px;color:#233047}
-  .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-  .btn{appearance:none;border:0;border-radius:18px;padding:12px 20px;font-weight:700;cursor:pointer;transition:transform .08s,box-shadow .08s}
-  .btn:active{transform:translateY(1px)}
-  .btn-primary{color:#fff;background:linear-gradient(90deg,var(--glow1),var(--glow2))}
-  .btn-secondary{background:#e2e8f0;color:#111827}
-  .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:14px;background:#eef2ff;color:#1f2a44;font-size:.9rem}
-  /* Table */
-  #table{position:absolute;inset:0;background:var(--felt);display:flex;flex-direction:column;justify-content:space-between;padding:12px 12px 16px;box-sizing:border-box}
-  /* HUD */
-  #topbar{display:flex;align-items:center;justify-content:space-between;gap:8px}
-  #modeSwitch{display:flex;gap:8px}
-  #timer{padding:6px 12px;border-radius:16px;background:#fff;font-weight:800;box-shadow:0 2px 6px rgba(0,0,0,.2);display:none;min-width:92px;text-align:center}
-  #timer.low{background:#ffe2e2}
-  #status{margin:8px auto 0;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
-  .status-pill{background:rgba(255,255,255,.92);border:1px solid rgba(0,0,0,.06);padding:6px 10px;border-radius:12px;font-weight:700}
-  /* Scores */
-  #scoreboard{display:flex;gap:8px}
-  .score{min-width:120px;padding:8px 12px;border-radius:14px;font-weight:800}
-  .score small{display:block;font-weight:600}
-  .ns{background:var(--teamNS);color:var(--teamNS-ink)}
-  .ew{background:var(--teamEW);color:var(--teamEW-ink)}
-  /* Players */
-  #players{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
-  .row-others{width:100%;display:flex;justify-content:space-between;padding:0 18%}
-  .plabel{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 14px;margin-bottom:6px;min-width:108px;border-radius:14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(2px);text-align:center}
-  .plabel strong{font-size:1rem}
-  .plabel span{font-size:.85rem}
-  #north{background:rgba(34,197,94,.85);border-color:rgba(34,197,94,.95);color:var(--teamNS-ink)}
-  #west,#east{background:rgba(236,72,153,.85);border-color:rgba(236,72,153,.95);color:var(--teamEW-ink)}
-  .turn{box-shadow:0 0 12px 3px var(--glow1)}
-  /* Trick area */
-  #trick{height:130px;display:flex;align-items:center;justify-content:center;gap:28px;color:#fff}
-  .played{display:flex;flex-direction:column;align-items:center;gap:4px}
-  .seat{font-size:.75rem;font-weight:800}
-  .mini{width:30px;height:42px;border-radius:5px;background:#fff;color:#111;border:1px solid #cbd5e1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700}
-  .mini .s{font-size:1.05rem}
-  .mini.heart .s,.mini.diamond .s{color:#c62828}
-  .mini.spade .s,.mini.club .s{color:#111}
-  /* Hand */
-  #hand{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:6px;padding:6px 8px}
-  .card{width:60px;height:84px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;cursor:pointer;user-select:none;transition:transform .08s,box-shadow .08s}
-  .card .r{font-size:1.05rem}.card .s{font-size:1.5rem}
-  .card.heart .s,.card.diamond .s{color:#c62828}.card.spade .s,.card.club .s{color:#111}
-  .card.legal{box-shadow:0 0 0 2px var(--glow1)}
-  .card.dim{opacity:.35;filter:grayscale(.2)}
-  .shake{animation:shake .15s linear}
-  @keyframes shake{0%{transform:translateX(0)}25%{transform:translateX(-3px)}50%{transform:translateX(3px)}75%{transform:translateX(-2px)}100%{transform:translateX(0)}}
-  /* Toast + overlay */
-  #toast{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.95);color:#111;padding:8px 12px;border-radius:12px;font-weight:700;border:1px solid rgba(0,0,0,.08);opacity:0;transition:opacity .18s}
-  #overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);color:#fff;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;z-index:20;text-align:center;padding:20px}
-  /* Trick history */
-  #history{position:absolute;bottom:6px;left:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:10px;color:#fff;padding:6px 8px;font-size:.9rem}
-  #history b{font-weight:800}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spades Arcade — Classic & 60-Second</title>
+  <meta name="description" content="Play Spades in Classic mode or blaze through 60-Second Arcade rounds. Clean UI, smart AI, clear turn & trick indicators." />
+  <style>
+    :root{
+      --ink:#0b1220;--felt:#0a5a2b;--paper:#f7fafc;
+      --teamNS:#22c55e;--teamNS-ink:#062e18;
+      --teamEW:#ec4899;--teamEW-ink:#3b0b1f;
+      --glow1:#00e1ff;--glow2:#a855f7;--danger:#ff5a5a;
+      --ok:#10b981;--muted:#5b6b8a;
+    }
+    html,body{height:100%;margin:0;background:var(--paper);color:var(--ink);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .hidden{display:none!important}
+    /* Welcome */
+    #welcome{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;z-index:10;background:var(--paper)}
+    .hero{width:min(960px,94vw);padding:48px;border-radius:28px;background:
+      radial-gradient(1100px 680px at 5% 8%,#fff 0%,#eff9ff 38%,transparent 65%),
+      radial-gradient(900px 600px at 90% 25%,#ffe8fb 0%,#e7f5ff 40%,transparent 70%),
+      linear-gradient(180deg,#fff 0%,#f3f9fe 60%,#f0fff9 100%);
+      border:1px solid rgba(14,18,40,.06);box-shadow:0 20px 60px rgba(14,18,40,.12)}
+    .hero h1{margin:0 0 6px;font-size:2.6rem;letter-spacing:-.02em}
+    .hero h2{margin:0 0 14px;font-weight:600;color:var(--muted)}
+    .hero p{margin:0 auto 22px;max-width:640px;color:#233047}
+    .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+    .btn{appearance:none;border:0;border-radius:18px;padding:12px 20px;font-weight:700;cursor:pointer;transition:transform .08s,box-shadow .08s}
+    .btn:active{transform:translateY(1px)}
+    .btn-primary{color:#fff;background:linear-gradient(90deg,var(--glow1),var(--glow2))}
+    .btn-secondary{background:#e2e8f0;color:#111827}
+    .chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:14px;background:#eef2ff;color:#1f2a44;font-size:.9rem}
+    /* Table */
+    #table{position:absolute;inset:0;background:var(--felt);display:flex;flex-direction:column;justify-content:space-between;padding:12px 12px 16px;box-sizing:border-box}
+    /* HUD */
+    #topbar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    #modeSwitch{display:flex;gap:8px}
+    #timer{padding:6px 12px;border-radius:16px;background:#fff;font-weight:800;box-shadow:0 2px 6px rgba(0,0,0,.2);display:none;min-width:92px;text-align:center}
+    #timer.low{background:#ffe2e2}
+    #status{margin:8px auto 0;display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
+    .status-pill{background:rgba(255,255,255,.92);border:1px solid rgba(0,0,0,.06);padding:6px 10px;border-radius:12px;font-weight:700}
+    /* Scores */
+    #scoreboard{display:flex;gap:8px}
+    .score{min-width:120px;padding:8px 12px;border-radius:14px;font-weight:800}
+    .score small{display:block;font-weight:600}
+    .ns{background:var(--teamNS);color:var(--teamNS-ink)}
+    .ew{background:var(--teamEW);color:var(--teamEW-ink)}
+    /* Players */
+    #players{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+    .row-others{width:100%;display:flex;justify-content:space-between;padding:0 18%}
+    .plabel{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 14px;margin-bottom:6px;min-width:108px;border-radius:14px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);}
+    .plabel strong{font-size:1rem}
+    .plabel span{font-size:.85rem}
+    #north{background:rgba(34,197,94,.85);border-color:rgba(34,197,94,.95);color:var(--teamNS-ink)}
+    #west,#east{background:rgba(236,72,153,.85);border-color:rgba(236,72,153,.95);color:var(--teamEW-ink)}
+    .turn{box-shadow:0 0 12px 3px var(--glow1)}
+    /* Trick area */
+    #trick{height:130px;display:flex;align-items:center;justify-content:center;gap:28px;color:#fff}
+    .played{display:flex;flex-direction:column;align-items:center;gap:4px}
+    .seat{font-size:.75rem;font-weight:800}
+    .mini{width:30px;height:42px;border-radius:5px;background:#fff;color:#111;border:1px solid #cbd5e1;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700}
+    .mini .s{font-size:1.05rem}
+    .mini.heart .s,.mini.diamond .s{color:#c62828}
+    .mini.spade .s,.mini.club .s{color:#111}
+    /* Hand */
+    #hand{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:6px;padding:6px 8px}
+    .card{width:60px;height:84px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;cursor:pointer;user-select:none;}
+    .card .r{font-size:1.05rem}.card .s{font-size:1.5rem}
+    .card.heart .s,.card.diamond .s{color:#c62828}.card.spade .s,.card.club .s{color:#111}
+    .card.legal{box-shadow:0 0 0 2px var(--glow1)}
+    .card.dim{opacity:.35;filter:grayscale(.2)}
+    .shake{animation:shake .15s linear}
+    @keyframes shake{0%{transform:translateX(0)}25%{transform:translateX(-3px)}50%{transform:translateX(3px)}75%{transform:translateX(-2px)}100%{transform:translateX(0)}}
+    /* Toast + overlay */
+    #toast{position:absolute;bottom:96px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.95);color:#111;padding:8px 12px;border-radius:12px;font-weight:700;border:1px solid rgba(0,0,0,.08);opacity:0;transition:opacity .4s;}
+    #overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);color:#fff;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;z-index:20;text-align:center;padding:20px}
+    /* Trick history */
+    #history{position:absolute;bottom:6px;left:6px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);border-radius:10px;color:#fff;padding:6px 8px;font-size:.9rem}
+    #history b{font-weight:800}
+  </style>
 </head>
 <body>
   <div id="welcome">
     <div class="hero">
       <h1>Spades Arcade</h1>
       <h2>Classic or 60-Second quick play</h2>
-      <p>Choose Classic Spades for a full traditional round or blitz through a single 60-second deal where the most tricks wins. Clear turn prompts, suit guidance, and crisp visuals help you play fast.</p>
+      <p>Choose Classic Spades for a full traditional round or blitz through a single 60-second deal where the most tricks wins. Clear turn prompts, suit guidance, and crisp visuals help you play fast and fair.</p>
       <div class="row" style="margin-bottom:10px">
         <button id="startClassic" class="btn btn-primary">Play Classic</button>
         <button id="startTimed" class="btn btn-secondary">Play 60-Second</button>
@@ -144,25 +130,21 @@
 
   <div id="overlay"></div>
 
-<script>
+  <script>
 (() => {
   "use strict";
-
-  /* ---------- Core data ---------- */
   const suits = ['♠','♣','♦','♥'];
   const ranks = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
-  const seatNames = ['South','East','North','West']; // 0..3
-
-  let players = []; // [{hand:[], tricks:0, bid:0}]
+  const seatNames = ['South','East','North','West'];
+  let players = [];
   let current = 0;
   let leadSuit = null;
-  let trick = []; // [{card, player}]
+  let trick = [];
   let spadesBroken = false;
   let mode = 'classic';
-  let lockPlay = false; // prevent double actions during resolve
+  let lockPlay = false;
   let timerRef = null, timeLeft = 60;
-  const lastTricks = []; // store brief text for last 3
-
+  const lastTricks = [];
   const els = {
     welcome: document.getElementById('welcome'),
     table: document.getElementById('table'),
@@ -190,11 +172,8 @@
     overlay: document.getElementById('overlay'),
     histTxt: document.getElementById('histTxt'),
   };
-
-  /* ---------- Utilities ---------- */
   const show = (el) => el.classList.remove('hidden');
   const hide = (el) => el.classList.add('hidden');
-
   function buildDeck(){
     const d=[]; for(const s of suits){ for(const r of ranks){ d.push({suit:s,rank:r}); } } return d;
   }
@@ -208,18 +187,15 @@
     if(b.suit===lead) return -1;
     return 0;
   }
-
   function deal(){
     const deck = shuffle(buildDeck());
     players = Array.from({length:4},()=>({hand:[],tricks:0,bid:0}));
     for(let i=0;i<52;i++) players[i%4].hand.push(deck[i]);
-    // sort within suits by rank (rendering still uses alternating color grouping)
     for(const p of players){
       p.hand.sort((a,b)=> (a.suit===b.suit? rIndex(a.rank)-rIndex(b.rank) : (['♣','♠','♥','♦'].indexOf(a.suit)-['♣','♠','♥','♦'].indexOf(b.suit))));
       p.bid = estimateBid(p.hand);
     }
   }
-
   function estimateBid(hand){
     let bid=0;
     for(const c of hand){
@@ -228,16 +204,12 @@
     }
     return Math.max(1, Math.round(bid));
   }
-
   function findFirst(){
-    // lead 2♣ if present, else South
     for(let i=0;i<4;i++){
       if(players[i].hand.some(c=>c.suit==='♣' && c.rank==='2')) return i;
     }
     return 0;
   }
-
-  /* ---------- Render ---------- */
   function renderScores(){
     const ns = players[0].tricks + players[2].tricks;
     const ew = players[1].tricks + players[3].tricks;
@@ -246,13 +218,11 @@
     els.nsScore.textContent = `Bid ${nsBid} · Tricks ${ns}`;
     els.ewScore.textContent = `Bid ${ewBid} · Tricks ${ew}`;
   }
-
   function renderCounts(){
     els.nCount.textContent = `${players[2].hand.length} cards`;
     els.eCount.textContent = `${players[1].hand.length} cards`;
     els.wCount.textContent = `${players[3].hand.length} cards`;
   }
-
   function setTurnPills(){
     els.north.classList.toggle('turn', current===2);
     els.east.classList.toggle('turn', current===1);
@@ -262,9 +232,7 @@
     if(leadSuit){ els.leadSuitTxt.textContent = leadSuit; show(els.leadPill); } else { hide(els.leadPill); }
     if(spadesBroken) show(els.spadePill); else hide(els.spadePill);
   }
-
   function suitClass(s){ return s==='♥'?'heart':s==='♦'?'diamond':s==='♠'?'spade':'club'; }
-
   function patchTrick(){
     els.trick.innerHTML='';
     for(const play of trick){
@@ -276,7 +244,6 @@
       els.trick.appendChild(wrap);
     }
   }
-
   function groupAndOrderHand(hand){
     const groups = {'♣':[], '♠':[], '♥':[], '♦':[]};
     hand.forEach((c,idx)=>groups[c.suit].push({c,idx}));
@@ -291,7 +258,6 @@
     }
     const ordered=[]; for(const s of seq) ordered.push(...groups[s]); return ordered;
   }
-
   function legalMovesOf(hand){
     if(current!==0) return [];
     if(!leadSuit){
@@ -304,7 +270,6 @@
       return res;
     }
   }
-
   function renderHand(){
     const south = players[0];
     const legals = legalMovesOf(south.hand);
@@ -324,13 +289,10 @@
       els.hand.appendChild(div);
     });
   }
-
   function toast(msg){
     els.toast.textContent = msg; els.toast.style.opacity='1';
     setTimeout(()=>{ els.toast.style.opacity='0'; }, 1600);
   }
-
-  /* ---------- Game flow ---------- */
   function playCard(pIdx, cardIdx){
     if(lockPlay) return;
     const p = players[pIdx];
@@ -348,7 +310,6 @@
       setTimeout(resolveTrick, 340);
     }
   }
-
   function aiPlay(){
     if(lockPlay) return;
     const pIdx = current;
@@ -361,7 +322,7 @@
       const has = hand.some(c=>c.suit===leadSuit);
       legal = hand.map((c,i)=> (!has || c.suit===leadSuit) ? i : null).filter(i=>i!==null);
     }
-    if(legal.length===0) return; // safety
+    if(legal.length===0) return;
     let pick = legal[0];
     for(const i of legal){
       const a=hand[i], b=hand[pick];
@@ -370,7 +331,6 @@
     }
     playCard(pIdx, pick);
   }
-
   function resolveTrick(){
     let winner = trick[0];
     for(const play of trick.slice(1)){
@@ -382,16 +342,13 @@
     lastTricks.unshift(`${compact} → ${seatNames[wIdx][0]}`);
     if(lastTricks.length>3) lastTricks.pop();
     els.histTxt.textContent = lastTricks.join('   |   ');
-
     trick = []; leadSuit = null; lockPlay=false;
     current = wIdx;
     renderScores(); patchTrick(); renderCounts(); setTurnPills(); renderHand();
-
     const southDone = players[0].hand.length===0;
     if(mode==='classic' && southDone){ endGame(); return; }
     if(current!==0) setTimeout(aiPlay, 320);
   }
-
   function endGame(){
     stopTimer(true);
     const nsT = players[0].tricks + players[2].tricks;
@@ -412,10 +369,8 @@
     els.overlay.style.display='flex';
     document.getElementById('again').onclick = ()=>{ els.overlay.style.display='none'; start(mode); };
   }
-
-  /* ---------- Timer (pause/resume without resetting) ---------- */
   function startTimer(reset=true){
-    stopTimer(); // clear any existing
+    stopTimer();
     if(reset) timeLeft = 60;
     els.timer.classList.toggle('low', timeLeft<=10);
     els.timer.style.display='block';
@@ -431,17 +386,12 @@
     if(timerRef){ clearInterval(timerRef); timerRef=null; }
     if(hide) els.timer.style.display='none';
   }
-
-  // Pause on hide, resume on show without resetting timeLeft
   document.addEventListener('visibilitychange',()=>{
     if(mode!=='timed') return;
-    if(document.hidden){ stopTimer(); }          // pause (keep timeLeft)
-    else if(!timerRef && timeLeft>0){ startTimer(false); } // resume
+    if(document.hidden){ stopTimer(); }
+    else if(!timerRef && timeLeft>0){ startTimer(false); }
   });
-
-  /* ---------- Start / Mode ---------- */
   function start(selected){
-    // close overlay if open
     els.overlay.style.display='none';
     mode = selected;
     spadesBroken=false; leadSuit=null; trick.length=0; lastTricks.length=0;
@@ -454,13 +404,10 @@
     if(mode==='timed') startTimer(true); else stopTimer(true);
     if(current!==0) setTimeout(aiPlay, 350);
   }
-
-  /* ---------- Events ---------- */
   els.startClassic.onclick = ()=> start('classic');
   els.startTimed.onclick   = ()=> start('timed');
   els.toClassic.onclick = ()=> start('classic');
   els.toTimed.onclick   = ()=> start('timed');
-
   els.how.onclick = ()=> {
     alert(
 `How to Play (Quick)
@@ -469,10 +416,9 @@
 • In 60-Second mode: most tricks (books) after 60s wins.
 • Classic mode: traditional bidding & scoring lite (team bids shown; tricks still decide round outcome here).`);
   };
-
 })();
-</script>
+  </script>
 </body>
 </html>
-</body>
-</html>
+
+Fix HTML structure and remove duplicate tags.
