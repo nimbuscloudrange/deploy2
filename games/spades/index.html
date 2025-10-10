@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Spades Tournament — by Ryan Animashaun</title>
+  <meta name="description" content="Play modern Spades with smart AI, slick visuals, avatars and fast gameplay." />
+  <style>
+    :root{
+      --ink:#0b1220;--felt:#0a5a2b;--felt2:#0c7a39;--paper:#f7fafc;
+      --blue:#2563eb;--blue-ink:#e0f0ff;--red:#dc2626;--red-ink:#ffe0e0;
+      --glow1:#00e1ff;--glow2:#a855f7
+    }
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--paper);color:var(--ink)}
+    .hidden{display:none!important}
+
+    /* Welcome */
+    header{display:flex;justify-content:center;padding:24px 12px}
+    #welcome .hero{width:min(1000px,92vw);padding:52px;border-radius:32px;box-shadow:0 24px 70px rgba(14,18,40,.14),0 2px 10px rgba(14,18,40,.06);background:linear-gradient(135deg, #fff 0%, #f0f9ff 35%, #fef3ff 65%, #f0fff4 100%);border:1px solid rgba(14,18,40,.06);text-align:center;position:relative;overflow:hidden}
+    #welcome .hero::before{content:"";position:absolute;inset:-40%;background:conic-gradient(from 0deg, rgba(0,225,255,.25), rgba(168,85,247,.25), rgba(236,72,153,.25), rgba(34,197,94,.25), rgba(0,225,255,.25));filter:blur(60px);animation:spin 18s linear infinite;z-index:0;pointer-events:none}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .title-gradient{background:linear-gradient(90deg,#0ea5e9,#8b5cf6,#ef4444,#22c55e);-webkit-background-clip:text;background-clip:text;color:transparent}
+    .sub-badge{display:inline-block;margin-top:6px;padding:4px 10px;border-radius:999px;background:#0ea5e911;color:#0b1220;border:1px solid #bae6fd;font-weight:800;letter-spacing:.02em}
+    h1{margin:0 0 4px 0;font-size:2.2rem}
+    p.lead{margin:0 auto 16px auto;max-width:56ch;color:#334155}
+    .btn{display:inline-block;margin:6px;padding:12px 20px;border-radius:18px;border:none;cursor:pointer;font-size:1rem;font-weight:700;transition:transform .1s,box-shadow .1s}
+    .btn-primary{background:linear-gradient(90deg,var(--glow1),var(--glow2));color:#fff}
+    .btn-secondary{background:#e2e8f0;color:var(--ink)}
+    .btn-ghost{background:transparent;color:var(--ink);border:1px solid #cbd5e1}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 6px 12px rgba(0,0,0,.15)}
+
+    /* Settings */
+    #settings{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+    .chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:16px;border:1px solid #cbd5e1;background:#fff}
+    .chip label{font-size:.9rem;font-weight:600}
+    .chip select,.chip input{font-size:.95rem;padding:6px 8px;border-radius:10px;border:1px solid #cbd5e1}
+
+    /* Table */
+    #table{position:fixed;inset:0;background:radial-gradient(1200px 600px at 50% 55%, var(--felt2), var(--felt));display:grid;place-items:center;padding:16px;box-sizing:border-box;z-index:1}
+    #board{display:grid;grid-template-rows:auto 1fr auto;align-items:center;justify-items:center;gap:16px;width:min(1100px,96vw);height:min(92vh,780px);position:relative}
+    #table::after{content:"";position:absolute;inset:0;background:radial-gradient(60% 50% at 50% 45%, rgba(0,0,0,0) 55%, rgba(0,0,0,.25) 100%);pointer-events:none;z-index:0}
+
+    /* Player ring (circular layout) */
+    #player-panel{position:relative;display:block;width:min(560px,90vw);height:min(560px,90vw);margin:0 auto;z-index:2}
+    .player-box{position:absolute;display:flex;flex-direction:column;align-items:center;background:rgba(255,255,255,0.24);border-radius:16px;padding:10px 12px;min-width:104px;text-align:center;backdrop-filter:blur(2px)}
+    .player-name{font-weight:800}
+    .player-box .avatar{width:70px;height:70px;border-radius:50%;border:3px solid #ccc;margin-bottom:6px;object-fit:cover;background:#e5edf7;transition:transform .2s}
+    .team-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.75rem;font-weight:800;letter-spacing:.02em}
+    .player-box.team1 .avatar{border-color:var(--blue)}
+    .player-box.team2 .avatar{border-color:var(--red)}
+    .player-box.team1 .team-badge{background:var(--blue);color:var(--blue-ink)}
+    .player-box.team2 .team-badge{background:var(--red);color:var(--red-ink)}
+
+    /* Seat positions */
+    .seat-south{left:50%;bottom:0;transform:translate(-50%,0)}
+    .seat-north{left:50%;top:0;transform:translate(-50%,0)}
+    .seat-east{right:0;top:50%;transform:translate(0,-50%)}
+    .seat-west{left:0;top:50%;transform:translate(0,-50%)}
+
+    /* Turn highlight */
+    .player-box.active{box-shadow:0 0 0 3px var(--glow1),0 0 24px 6px rgba(0,225,255,.35)}
+    .player-box.active .avatar{transform:scale(1.06)}
+    .player-box.active::after{content:"▶";position:absolute;top:-10px;left:50%;transform:translate(-50%,-100%);font-weight:900;color:#fff;background:linear-gradient(90deg,var(--glow1),var(--glow2));padding:2px 6px;border-radius:10px;font-size:.75rem;box-shadow:0 6px 14px rgba(0,0,0,.2)}
+
+    /* Scoreboard */
+    #scoreboard{position:absolute;top:8px;right:8px;display:flex;gap:8px;z-index:3}
+    .score-box{min-width:150px;padding:10px 16px;border-radius:14px;font-size:1rem;font-weight:800;text-align:center}
+    .score-box span{display:block;font-size:.9rem;font-weight:600}
+    .score-blue{background:var(--blue);color:var(--blue-ink)}
+    .score-red{background:var(--red);color:var(--red-ink)}
+
+    /* Status/Timer */
+    #timer{position:absolute;top:8px;left:8px;padding:4px 12px;border-radius:16px;background:#ffffff;color:var(--ink);font-weight:800;font-size:1rem;box-shadow:0 2px 6px rgba(0,0,0,.2);display:none}
+    #status{position:absolute;top:54px;left:50%;transform:translateX(-50%);padding:6px 14px;border-radius:12px;background:rgba(255,255,255,.92);color:var(--ink);font-weight:800;font-size:1rem;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.1);z-index:3}
+
+    /* Trick area */
+    #trick{height:220px;display:flex;justify-content:center;align-items:flex-start;gap:22px;font-size:1.6rem;margin:0;z-index:2;transform:translateY(70px)}
+    .play-pod{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 10px;border-radius:14px}
+    .play-label{font-size:.8rem;font-weight:800;letter-spacing:.02em;margin-bottom:2px}
+    #trick .play-team1{background:rgba(37,99,235,.14);box-shadow:0 0 0 1px rgba(37,99,235,.35) inset, 0 8px 30px rgba(37,99,235,.15)}
+    #trick .play-team2{background:rgba(220,38,38,.14);box-shadow:0 0 0 1px rgba(220,38,38,.35) inset, 0 8px 30px rgba(220,38,38,.15)}
+
+    /* Cards */
+    .playing-card{width:58px;height:84px;cursor:pointer;transition:box-shadow .2s,transform .1s;box-shadow:0 2px 10px rgba(0,0,0,.09);margin:0 2px;border-radius:10px;background:transparent;user-select:none;perspective:600px;transform:translateZ(0);will-change:transform}
+    .playing-card::after{content:"";position:absolute;inset:0;border-radius:10px;background:linear-gradient(120deg, rgba(255,255,255,.35), rgba(255,255,255,0) 35%, rgba(255,255,255,.15) 65%, rgba(255,255,255,0));opacity:.35;pointer-events:none}
+    .playing-card.legal{box-shadow:0 0 0 2px var(--glow1) inset,0 2px 10px rgba(0,0,0,.09)}
+    .playing-card:hover{transform:translateY(-4px) scale(1.035) rotateX(4deg) rotateZ(-1deg)}
+    .playing-card:active{transform:translateY(-1px) scale(1.02)}
+    #hand{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;margin:0;z-index:3}
+
+    /* Toast & overlay */
+    #toast{position:absolute;bottom:100px;left:50%;transform:translateX(-50%);padding:8px 16px;border-radius:12px;background:rgba(255,255,255,.93);color:var(--ink);font-size:.92rem;opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
+    #overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);color:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:20;font-size:1.4rem;padding:20px;text-align:center;display:none}
+    #overlay button{margin-top:16px;padding:10px 20px;border:none;border-radius:20px;font-size:1rem;cursor:pointer}
+
+    /* Keyboard hint */
+    #kbd{position:absolute;bottom:8px;right:8px;background:rgba(255,255,255,.85);padding:6px 10px;border-radius:10px;font-size:.85rem;font-weight:700}
+
+    @media (max-width:700px){
+      #player-panel{width:min(460px,92vw);height:min(460px,92vw)}
+      .player-box{min-width:98px}
+      .playing-card{width:56px;height:80px}
+      #trick{gap:14px;height:168px;transform:translateY(80px)}
+      .score-box{min-width:120px;font-size:1em}
+    }
+    @media (max-width:480px){
+      .btn{padding:12px 16px}
+      .chip{padding:6px 10px}
+      .playing-card{width:60px;height:86px}
+      #status{font-size:.95rem}
+      .player-box .avatar{width:64px;height:64px}
+    }
+
+    /* Confetti & banner */
+    .confetti{position:fixed;top:-10px;width:8px;height:14px;opacity:0.9;transform:translateY(-20px) rotate(0deg);animation:fall 1.6s linear forwards}
+    @keyframes fall{to{transform:translateY(120vh) rotate(540deg);}}
+    .win-banner{display:flex;align-items:center;gap:10px;justify-content:center;margin:8px auto 12px auto;padding:10px 14px;border-radius:16px;background:linear-gradient(90deg, #2563eb22, #dc262622);border:1px solid #e2e8f0;backdrop-filter:blur(4px)}
+    .win-banner .crown{font-size:1.6rem;transform-origin:center;animation:pop 600ms cubic-bezier(.2,.8,.2,1)}
+    @keyframes pop{0%{transform:scale(.4) rotate(-10deg)}60%{transform:scale(1.15) rotate(8deg)}100%{transform:scale(1)}}
+  </style>
+</head>
+<body>
+  <header id="welcome">
+    <div class="hero" role="region" aria-label="Welcome">
+      <h1 class="title-gradient" style="font-size:2.6rem;margin:0">♠️ Spades Tournament</h1>
+      <div class="sub-badge">by Ryan Animashaun</div>
+      <p class="lead">Phone-first, tournament-style Spades. Smart AI, fast play, bold teams. Pick a mode and deal in.</p>
+      <div>
+        <button id="classicBtn" class="btn btn-primary" aria-label="Start Classic Mode">Classic Mode</button>
+        <button id="timedBtn" class="btn btn-secondary" aria-label="Start 60-Second Mode">60-Second Mode</button>
+        <button id="howBtn" class="btn btn-ghost" aria-label="How to Play">How to Play</button>
+      </div>
+      <div id="settings" aria-label="Game Settings">
+        <div class="chip"><label for="difficulty">AI:</label>
+          <select id="difficulty" aria-label="AI Difficulty">
+            <option value="easy">Easy</option>
+            <option value="normal" selected>Normal</option>
+            <option value="smart">Smart</option>
+          </select>
+        </div>
+        <div class="chip"><label for="timerLen">Timer:</label>
+          <select id="timerLen" aria-label="Timer Length">
+            <option value="30">30s</option>
+            <option value="60" selected>60s</option>
+            <option value="120">120s</option>
+          </select>
+        </div>
+        <div class="chip"><label for="nameInput">Your name:</label>
+          <input id="nameInput" type="text" maxlength="16" placeholder="You" />
+        </div>
+        <div class="chip"><label for="muteToggle">Sound:</label>
+          <input id="muteToggle" type="checkbox" /> mute
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div id="table" class="hidden" role="application" aria-label="Spades table">
+    <div id="scoreboard">
+      <div id="scoreBlue" class="score-box score-blue"></div>
+      <div id="scoreRed" class="score-box score-red"></div>
+    </div>
+    <div id="timer" aria-live="polite"></div>
+    <div id="status" aria-live="polite"></div>
+
+    <div id="board">
+      <div id="player-panel" class="hidden">
+        <div class="player-box team1 seat-south" id="player-south" role="button" aria-label="Edit your name">
+          <div class="team-badge">Blue Team</div>
+          <img class="avatar" id="avatar-south" alt="You" />
+          <div class="player-name" id="player-south-name">You</div>
+          <div class="meta" id="player-south-meta">Bid: —</div>
+        </div>
+        <div class="player-box team2 seat-east" id="player-east">
+          <div class="team-badge">Red Team</div>
+          <img class="avatar" id="avatar-east" alt="East Bot" />
+          <div class="player-name" id="player-east-name">East (AI)</div>
+          <div class="meta" id="player-east-meta">Bid: —</div>
+        </div>
+        <div class="player-box team1 seat-north" id="player-north">
+          <div class="team-badge">Blue Team</div>
+          <img class="avatar" id="avatar-north" alt="North Bot" />
+          <div class="player-name" id="player-north-name">North (AI)</div>
+          <div class="meta" id="player-north-meta">Bid: —</div>
+        </div>
+        <div class="player-box team2 seat-west" id="player-west">
+          <div class="team-badge">Red Team</div>
+          <img class="avatar" id="avatar-west" alt="West Bot" />
+          <div class="player-name" id="player-west-name">West (AI)</div>
+          <div class="meta" id="player-west-meta">Bid: —</div>
+        </div>
+      </div>
+
+      <div id="trick"></div>
+      <div id="hand"></div>
+    </div>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <div id="kbd">Keys: <strong>A</strong> autoplay · <strong>H</strong> hint</div>
+  </div>
+
+  <div id="overlay"></div>
+
+  <template id="card-tmpl">
+    <svg class="playing-card" viewBox="0 0 60 90" aria-hidden="true">
+      <defs>
+        <linearGradient id="cardGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#fff"/>
+          <stop offset="100%" stop-color="#f3f6fb"/>
+        </linearGradient>
+      </defs>
+      <rect width="60" height="90" rx="10" fill="url(#cardGrad)" stroke="#b7c0cc" stroke-width="2"></rect>
+      <text x="10" y="23" font-size="17" font-weight="bold" data-rank-top></text>
+      <text x="44" y="85" font-size="16" font-weight="bold" opacity="0.7" text-anchor="end" data-rank-bot></text>
+      <text x="10" y="45" font-size="22" data-suit-big></text>
+      <text x="48" y="75" font-size="20" opacity="0.7" text-anchor="end" data-suit-bot></text>
+    </svg>
+  </template>
+
+  <script>
+    // ----- Core State -----
+    const suits = ['♠','♣','♦','♥'];
+    const suitColors = { '♠': '#1f2937', '♣': '#1f2937', '♥': '#e53e3e', '♦': '#e53e3e' };
+    const ranks = ['2','3','4','5','6','7','8','9','10','J','Q','K','A'];
+
+    let players = [];
+    let currentPlayerIndex = 0;
+    let leadSuit = null;
+    let trickCards = [];
+    let spadesBroken = false;
+    let timerInterval = null;
+    let timeLeft = 60;
+    let mode = 'classic';
+    let bagsBlue = 0, bagsRed = 0; // not displayed, but tracked for later
+
+    const scoreBlue = { bid: 0, tricks: 0, score: 0, total: 0 };
+    const scoreRed  = { bid: 0, tricks: 0, score: 0, total: 0 };
+
+    // UI refs
+    const welcome = document.getElementById('welcome');
+    const tableEl = document.getElementById('table');
+    const classicBtn = document.getElementById('classicBtn');
+    const timedBtn = document.getElementById('timedBtn');
+    const howBtn = document.getElementById('howBtn');
+    const scoreboardBlue = document.getElementById('scoreBlue');
+    const scoreboardRed = document.getElementById('scoreRed');
+    const timerEl = document.getElementById('timer');
+    const trickEl = document.getElementById('trick');
+    const handEl = document.getElementById('hand');
+    const toastEl = document.getElementById('toast');
+    const overlay = document.getElementById('overlay');
+    const statusEl = document.getElementById('status');
+    const nameInput = document.getElementById('nameInput');
+    const timerLenSel = document.getElementById('timerLen');
+    const diffSel = document.getElementById('difficulty');
+    const muteToggle = document.getElementById('muteToggle');
+
+    const seatNames = ['South','East','North','West'];
+    const panelIDs = ['player-south','player-east','player-north','player-west'];
+
+    // Avatars
+    const avatarURL = (seed)=>`https://api.dicebear.com/9.x/avataaars-neutral/svg?seed=${encodeURIComponent(seed)}&backgroundType=gradientLinear`;
+    function setAvatars(){
+      document.getElementById('avatar-south').src = avatarURL(localStorage.getItem('spades_avatar_south')||'South');
+      document.getElementById('avatar-east').src = avatarURL('EastBot');
+      document.getElementById('avatar-north').src = avatarURL('NorthBot');
+      document.getElementById('avatar-west').src = avatarURL('WestBot');
+    }
+
+    // Audio
+    let audioCtx = null; function ensureAudio(){ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }
+    function beep(freq=880, dur=0.06, vol=0.03){ if(muteToggle.checked) return; ensureAudio(); const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.frequency.value=freq; o.type='sine'; g.gain.value=vol; o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+dur); }
+    function chordWin(){ if(muteToggle.checked) return; ensureAudio(); const start=audioCtx.currentTime; [660,880,990].forEach((f,i)=>{ const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.frequency.value=f; o.type='sine'; g.gain.value=0.015; o.connect(g); g.connect(audioCtx.destination); o.start(start+i*0.03); o.stop(start+0.18+i*0.03);}); }
+
+    // Utils
+    function buildDeck(){ const d=[]; for(const s of suits){ for(const r of ranks){ d.push({suit:s,rank:r}); } } return d; }
+    function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]];} return a; }
+    function cardValue(c){ return ranks.indexOf(c.rank); }
+
+    function estimateBid(hand){
+      let bid=0; let spCount=0;
+      for(const card of hand){ const ri=ranks.indexOf(card.rank);
+        if(card.suit==='♠'){ spCount++; if(ri>=8) bid+=1; else if(ri>=5) bid+=0.5; }
+        else { if(ri>=10) bid+=0.5; }
+      }
+      if(spCount>=5) bid+=0.5; if(spCount>=6) bid+=0.5;
+      return Math.max(1, Math.round(bid));
+    }
+
+    function deal(){
+      const deck = shuffle(buildDeck());
+      players = Array.from({length:4},()=>({ hand:[], tricks:0, bid:0 }));
+      for(let i=0;i<52;i++){ players[i%4].hand.push(deck[i]); }
+      for(const p of players){ p.hand.sort((a,b)=> suits.indexOf(a.suit)-suits.indexOf(b.suit) || ranks.indexOf(a.rank)-ranks.indexOf(b.rank)); p.bid=estimateBid(p.hand); }
+      scoreBlue.bid = players[0].bid + players[2].bid; scoreRed.bid = players[1].bid + players[3].bid;
+      document.getElementById('player-south-meta').textContent = `Bid: ${players[0].bid}`;
+      document.getElementById('player-east-meta').textContent  = `Bid: ${players[1].bid}`;
+      document.getElementById('player-north-meta').textContent = `Bid: ${players[2].bid}`;
+      document.getElementById('player-west-meta').textContent  = `Bid: ${players[3].bid}`;
+    }
+
+    function findFirstPlayer(){ for(let i=0;i<players.length;i++){ if(players[i].hand.some(c=>c.suit==='♣' && c.rank==='2')) return i; } return 0; }
+
+    // Rendering
+    function renderScoreboard(){
+      scoreboardBlue.innerHTML = `<div>Blue Team</div><span>Bid: ${scoreBlue.bid}</span><span>Books: ${scoreBlue.tricks}</span><span>Score: ${scoreBlue.score}</span><span>Total: ${scoreBlue.total}</span>`;
+      scoreboardRed.innerHTML  = `<div>Red Team</div><span>Bid: ${scoreRed.bid}</span><span>Books: ${scoreRed.tricks}</span><span>Score: ${scoreRed.score}</span><span>Total: ${scoreRed.total}</span>`;
+    }
+
+    function renderPlayerPanels(){
+      for(let idx=0; idx<4; idx++){
+        const box = document.getElementById(panelIDs[idx]);
+        box.classList.remove('active');
+        const isYou = idx===0;
+        const name = isYou ? (localStorage.getItem('spades_name')||'You') : `${seatNames[idx]} (AI)`;
+        const nameEl = box.querySelector('.player-name');
+        nameEl.innerHTML = `${name}${!isYou ? `<div class="meta">${players[idx].hand.length} cards</div>`:''}`;
+      }
+      document.getElementById(panelIDs[currentPlayerIndex]).classList.add('active');
+    }
+
+    function svgCardEl(card, opts={}){
+      const tmpl = document.getElementById('card-tmpl');
+      const node = tmpl.content.firstElementChild.cloneNode(true);
+      node.dataset.idx = opts.dataIdx ?? '';
+      if(opts.legal) node.classList.add('legal');
+      node.querySelector('[data-rank-top]').setAttribute('fill', suitColors[card.suit]);
+      node.querySelector('[data-rank-bot]').setAttribute('fill', suitColors[card.suit]);
+      node.querySelector('[data-suit-big]').setAttribute('fill', suitColors[card.suit]);
+      node.querySelector('[data-suit-bot]').setAttribute('fill', suitColors[card.suit]);
+      node.querySelector('[data-rank-top]').textContent = card.rank;
+      node.querySelector('[data-rank-bot]').textContent = card.rank;
+      node.querySelector('[data-suit-big]').textContent = card.suit;
+      node.querySelector('[data-suit-bot]').textContent = card.suit;
+      return node;
+    }
+
+    function legalMoves(hand){
+      if(currentPlayerIndex!==0) return [];
+      if(!leadSuit){
+        const onlySpades = hand.every(c=>c.suit==='♠');
+        return hand.map((c,idx)=> (spadesBroken||onlySpades||c.suit!=='♠') ? idx : null).filter(i=>i!==null);
+      } else {
+        const hasSuit = hand.some(c=>c.suit===leadSuit);
+        return hand.map((c,idx)=> (!hasSuit || c.suit===leadSuit) ? idx : null).filter(i=>i!==null);
+      }
+    }
+
+    function renderHand(){
+      handEl.innerHTML='';
+      if(currentPlayerIndex!==0){ return; }
+      const south = players[0];
+      const legal = legalMoves(south.hand);
+
+      const groups = {'♣':[], '♠':[], '♥':[], '♦':[]};
+      south.hand.forEach((card,idx)=>groups[card.suit].push({card,idx}));
+      for(const s in groups){ groups[s].sort((a,b)=>ranks.indexOf(a.card.rank)-ranks.indexOf(b.card.rank)); }
+      const order = [];
+      const blackOrder=['♣','♠'], redOrder=['♥','♦'];
+      const blacks=blackOrder.filter(s=>groups[s].length); const reds=redOrder.filter(s=>groups[s].length);
+      let next = blacks.length>=reds.length ? 'b':'r', bi=0, ri=0;
+      while(bi<blacks.length || ri<reds.length){
+        if(next==='b' && bi<blacks.length){ order.push(...groups[blacks[bi++]]); next='r'; }
+        else if(next==='r' && ri<reds.length){ order.push(...groups[reds[ri++]]); next='b'; }
+        else { if(bi<blacks.length) order.push(...groups[blacks[bi++]]); if(ri<reds.length) order.push(...groups[reds[ri++]]); }
+      }
+
+      order.forEach(item=>{
+        const legalMove = legal.includes(item.idx);
+        const el = svgCardEl(item.card, {legal:legalMove, dataIdx:item.idx});
+        el.tabIndex = legalMove ? 0 : -1;
+        el.setAttribute('role','button');
+        el.setAttribute('aria-label', `${item.card.rank} of ${readableSuit(item.card.suit)} ${legalMove?'(legal)':'(illegal)'}`);
+        el.addEventListener('click', ()=>{
+          if(!legalMove){ showToast(leadSuit ? `Must follow suit: ${leadSuit}` : (spadesBroken ? 'Lead any suit' : 'Lead any non-spade')); return; }
+          playCard(0, item.idx);
+        });
+        handEl.appendChild(el);
+      });
+    }
+
+    function readableSuit(s){ return s==='♠'?'Spades':s==='♣'?'Clubs':s==='♦'?'Diamonds':'Hearts'; }
+
+    function updateTrickUI(){
+      trickEl.innerHTML='';
+      for(const play of trickCards){
+        const wrap = document.createElement('div');
+        wrap.className = `play-pod ${(play.player%2===0)?'play-team1':'play-team2'}`;
+        const label = document.createElement('div');
+        label.className = 'play-label';
+        label.textContent = play.player===0 ? (localStorage.getItem('spades_name')||'You') : seatNames[play.player];
+        const node = svgCardEl(play.card);
+        wrap.appendChild(label);
+        wrap.appendChild(node);
+        trickEl.appendChild(wrap);
+      }
+    }
+
+    function compareCards(a,b,lead){
+      if(a.suit===b.suit) return cardValue(a)-cardValue(b);
+      if(a.suit==='♠' && b.suit!=='♠') return 1;
+      if(b.suit==='♠' && a.suit!=='♠') return -1;
+      if(a.suit===lead) return 1; if(b.suit===lead) return -1; return 0;
+    }
+
+    function playCard(playerIdx, cardIdx){
+      const player = players[playerIdx];
+      const card = player.hand.splice(cardIdx,1)[0];
+      trickCards.push({card, player:playerIdx});
+      if(!leadSuit){ leadSuit = card.suit; if(card.suit==='♠') spadesBroken = true; }
+      else { if(card.suit==='♠') spadesBroken = true; }
+      beep(660,0.04,0.02);
+      updateTrickUI();
+      currentPlayerIndex = (currentPlayerIndex + 1) % 4;
+      renderPlayerPanels();
+      renderHand();
+      updateStatus();
+      // Slow down autoplay so user sees each card clearly
+      if(trickCards.length<4){ if(currentPlayerIndex!==0) setTimeout(aiPlay, 900); }
+      else { setTimeout(resolveTrick, 1200); }
+    }
+
+    function aiPlay(){
+      const level = diffSel.value; // easy | normal | smart
+      const pIdx = currentPlayerIndex;
+      const hand = players[pIdx].hand;
+      let legalIdxs;
+      if(!leadSuit){ const onlySpades = hand.every(c=>c.suit==='♠'); legalIdxs = hand.map((c,i)=>(spadesBroken||onlySpades||c.suit!=='♠')?i:null).filter(i=>i!==null); }
+      else { const hasSuit = hand.some(c=>c.suit===leadSuit); legalIdxs = hand.map((c,i)=>(!hasSuit||c.suit===leadSuit)?i:null).filter(i=>i!==null); }
+      let chosenIdx = legalIdxs[0];
+      if(level==='easy'){
+        chosenIdx = legalIdxs.sort((i,j)=>cardValue(hand[i])-cardValue(hand[j]))[Math.min(1, legalIdxs.length-1)];
+      } else if(level==='normal'){
+        chosenIdx = legalIdxs.reduce((best,i)=>{
+          const a=hand[i], b=hand[best];
+          if(a.suit!==b.suit){ if(a.suit==='♠' && b.suit!=='♠') return best; if(b.suit==='♠' && a.suit!=='♠') return i; }
+          return cardValue(a) < cardValue(b) ? i : best;
+        }, legalIdxs[0]);
+      } else {
+        if(trickCards.length>0){
+          const currentWinner = trickCards.reduce((w,p)=> compareCards(p.card,w.card,leadSuit)>0 ? p : w, trickCards[0]);
+          const partnerIdx = (pIdx+2)%4;
+          if(currentWinner.player===partnerIdx){
+            chosenIdx = legalIdxs.reduce((best,i)=>{ const a=hand[i], b=hand[best]; if(a.suit!==leadSuit && a.suit!=='♠' && (b.suit===leadSuit || b.suit==='♠')) return i; return cardValue(a) < cardValue(b) ? i : best; }, legalIdxs[0]);
+          } else {
+            let winIdx = null; let winCard=null;
+            for(const i of legalIdxs){ const c=hand[i]; let hypotheticalWinner = {card:c, player:pIdx}; for(const play of trickCards){ if(compareCards(play.card, hypotheticalWinner.card, leadSuit)>0) hypotheticalWinner = play; } if(hypotheticalWinner.player===pIdx){ if(!winCard || compareCards(c, winCard, leadSuit)<0){ winCard=c; winIdx=i; } } }
+            chosenIdx = winIdx!==null ? winIdx : legalIdxs.reduce((best,i)=> cardValue(hand[i])<cardValue(hand[best])?i:best, legalIdxs[0]);
+          }
+        } else {
+          const suitsByLen = ['♣','♥','♦','♠'].map(s=>({s, len: hand.filter(c=>c.suit===s).length}))
+            .sort((a,b)=> b.len-a.len || a.s.localeCompare(b.s));
+          const leadChoice = suitsByLen.find(x=>x.s!=='♠' || spadesBroken || x.len===hand.length).s;
+          const candidates = hand.map((c,i)=>({c,i})).filter(x=>x.c.suit===leadChoice);
+          chosenIdx = candidates.reduce((best,x)=> cardValue(x.c)<cardValue(candidates[best].c) ? x.i : best, 0);
+        }
+      }
+      playCard(pIdx, chosenIdx);
+    }
+
+    function resolveTrick(){
+      let winner = trickCards[0];
+      for(const play of trickCards.slice(1)){ if(compareCards(play.card, winner.card, leadSuit)>0) winner = play; }
+      const winnerIdx = winner.player;
+      players[winnerIdx].tricks++;
+      if(winnerIdx%2===0) scoreBlue.tricks++; else scoreRed.tricks++;
+      chordWin();
+      // Briefly highlight the winner's panel
+      const winnerPanel = document.getElementById(panelIDs[winnerIdx]);
+      if(winnerPanel){ winnerPanel.classList.add('active'); setTimeout(()=>winnerPanel.classList.remove('active'), 700); }
+      showToast(`${winnerIdx===0?(localStorage.getItem('spades_name')||'You'):seatNames[winnerIdx]} won the book`);
+      leadSuit=null; trickCards=[]; currentPlayerIndex=winnerIdx;
+      renderScoreboard(); updateTrickUI(); renderPlayerPanels(); updateStatus();
+      const southFinished = players[0].hand.length===0;
+      if(southFinished) endGame(); else { if(currentPlayerIndex!==0) setTimeout(aiPlay, 900); renderHand(); }
+    }
+
+    function showToast(msg){ toastEl.textContent=msg; toastEl.style.opacity=1; setTimeout(()=> toastEl.style.opacity=0, 1600); }
+
+    function updateStatus(){
+      const leadText = leadSuit ? `· Follow: ${leadSuit}` : (spadesBroken ? '· Lead any suit' : '· Lead any non-spade');
+      statusEl.textContent = (currentPlayerIndex===0? 'Your turn' : `${seatNames[currentPlayerIndex]} to play`) + ' ' + leadText + (spadesBroken?' · Spades broken':' · Spades not broken');
+    }
+
+    function startTimer(){
+      timerEl.style.display='block';
+      timeLeft = parseInt(timerLenSel.value,10) || 60;
+      timerEl.textContent = `⏱️ ${timeLeft}s`;
+      timerEl.style.background = '#ffffff';
+      if(timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(()=>{
+        timeLeft--; if(timeLeft<=10) timerEl.style.background = '#ff7878';
+        timerEl.textContent = `⏱️ ${timeLeft}s`;
+        if(timeLeft<=0){ clearInterval(timerInterval); endGame(); }
+      }, 1000);
+    }
+
+    function endGame(){
+      if(timerInterval) clearInterval(timerInterval);
+      timerEl.style.display='none';
+      const bBid=scoreBlue.bid, rBid=scoreRed.bid, bTr=scoreBlue.tricks, rTr=scoreRed.tricks;
+      let bHand=0, rHand=0; let bBags=0, rBags=0;
+      if(mode==='classic'){
+        if(bTr>=bBid){ bHand = bBid*10 + (bTr-bBid); bBags = (bTr-bid); } else { bHand = -bBid*10; }
+        if(rTr>=rBid){ rHand = rBid*10 + (rTr-rBid); rBags = (rTr-rBid); } else { rHand = -rBid*10; }
+        bagsBlue += bBags; bagsRed += rBags;
+        scoreBlue.score = bHand; scoreRed.score = rHand;
+        scoreBlue.total += bHand; scoreRed.total += rHand;
+      } else { scoreBlue.score=bTr; scoreRed.score=rTr; scoreBlue.total += bTr; scoreRed.total += rTr; }
+      let resultMsg, winTeam=null;
+      if(bHand>rHand){ resultMsg = `Blue Team wins this hand! (${bHand} vs ${rHand})`; winTeam='Blue'; }
+      else if(rHand>bHand){ resultMsg = `Red Team wins this hand! (${rHand} vs ${bHand})`; winTeam='Red'; }
+      else { resultMsg = `It's a tie!`; }
+      renderScoreboard();
+      overlay.innerHTML = `<div class="win-banner"><span class="crown">👑</span><strong>${resultMsg}</strong></div>
+        <div style="font-size:1rem;opacity:.9;margin-bottom:12px">Match Total — Blue: ${scoreBlue.total} · Red: ${scoreRed.total}</div>
+        <div style=\"display:flex;gap:8px;flex-wrap:wrap;justify-content:center\">
+          <button id=\"restartBtn\" class=\"btn btn-primary\">Deal Next Hand</button>
+          <button id=\"homeBtn\" class=\"btn btn-secondary\">Main Menu</button>
+        </div>`;
+      overlay.style.display='flex';
+      shortCelebrate(winTeam);
+      document.getElementById('restartBtn').addEventListener('click',()=>{ overlay.style.display='none'; startGame(mode); });
+      document.getElementById('homeBtn').addEventListener('click',()=>{ overlay.style.display='none'; goHome(); });
+    }
+
+    function startGame(selectedMode){
+      mode = selectedMode;
+      scoreBlue.tricks=0; scoreRed.tricks=0; scoreBlue.score=0; scoreRed.score=0; leadSuit=null; trickCards=[]; spadesBroken=false;
+      deal();
+      currentPlayerIndex = findFirstPlayer();
+      renderScoreboard(); renderPlayerPanels(); updateTrickUI(); renderHand();
+      welcome.classList.add('hidden'); tableEl.classList.remove('hidden'); document.getElementById('player-panel').classList.remove('hidden');
+      if(mode==='timed') startTimer(); else timerEl.style.display='none';
+      if(currentPlayerIndex!==0) setTimeout(aiPlay, 900);
+      updateStatus();
+    }
+
+    function goHome(){ tableEl.classList.add('hidden'); document.getElementById('player-panel').classList.add('hidden'); welcome.classList.remove('hidden'); }
+
+    // Preset
+    function loadPreset(){
+      const name = localStorage.getItem('spades_name'); if(name){ nameInput.value=name; document.getElementById('player-south-name').textContent=name; }
+      const diff = localStorage.getItem('spades_diff'); if(diff){ diffSel.value=diff; }
+      const t = localStorage.getItem('spades_timer'); if(t){ timerLenSel.value=t; }
+      const mute = localStorage.getItem('spades_mute'); if(mute){ muteToggle.checked = mute==='1'; }
+      setAvatars();
+    }
+    function savePreset(){ if(nameInput.value) localStorage.setItem('spades_name', nameInput.value.slice(0,16)); localStorage.setItem('spades_diff', diffSel.value); localStorage.setItem('spades_timer', timerLenSel.value); localStorage.setItem('spades_mute', muteToggle.checked ? '1':'0'); }
+
+    // Events
+    classicBtn.addEventListener('click',()=> { savePreset(); startGame('classic'); });
+    timedBtn.addEventListener('click',()=> { savePreset(); startGame('timed'); });
+    howBtn.addEventListener('click',()=>{ alert(`Spades basics\n\n• Follow suit if you can.\n• Spades trump all other suits but can't be led until broken.\n• Blue Team (South/North) vs Red Team (East/West). Meet or beat your combined bid to score. Overtricks are bags; 10 bags = -100.`); });
+    document.getElementById('player-south').addEventListener('click',()=>{ const name = prompt('Enter your name:', localStorage.getItem('spades_name') || 'You'); if(name){ localStorage.setItem('spades_name', name.slice(0,16)); document.getElementById('player-south-name').textContent = localStorage.getItem('spades_name'); }});
+    nameInput.addEventListener('change',()=>{ if(nameInput.value){ localStorage.setItem('spades_name', nameInput.value.slice(0,16)); setAvatars(); }});
+    diffSel.addEventListener('change', savePreset); timerLenSel.addEventListener('change', savePreset); muteToggle.addEventListener('change', savePreset);
+
+    (function init(){ loadPreset(); setAvatars(); runSmokeTests(25); })();
+
+    document.addEventListener('keydown', (e)=>{
+      if(tableEl.classList.contains('hidden')) return;
+      if(e.key.toLowerCase()==='a' && currentPlayerIndex===0){ const legal = legalMoves(players[0].hand); if(legal.length){ const idx = legal.reduce((best,i)=> cardValue(players[0].hand[i])<cardValue(players[0].hand[best])?i:best, legal[0]); playCard(0, idx); } }
+      if(e.key.toLowerCase()==='h' && currentPlayerIndex===0){ const legal = legalMoves(players[0].hand); if(legal.length){ const i = legal[0]; showToast(`Hint: Consider ${players[0].hand[i].rank} of ${readableSuit(players[0].hand[i].suit)} — safe legal lead`); } }
+    });
+
+    // Smoke Tests
+    function runSmokeTests(iterations=1){
+      try{
+        for(let n=0;n<iterations;n++){
+          const d = buildDeck(); console.assert(d.length===52, 'Deck should have 52 cards'); const uniq = new Set(d.map(c=>c.suit+c.rank)); console.assert(uniq.size===52, 'Deck unique');
+          const a={suit:'♣',rank:'A'}, k={suit:'♣',rank:'K'}; console.assert(compareCards(a,k,'♣')>0, 'Ace of clubs > King on clubs lead');
+          const sp={suit:'♠',rank:'2'}, h={suit:'♥',rank:'A'}; console.assert(compareCards(sp,h,'♥')>0, 'Any spade beats hearts');
+          const leadH={suit:'♥',rank:'2'}, offC={suit:'♣',rank:'A'}; console.assert(compareCards(leadH,offC,'♥')>0, 'Lead suit beats off-suit');
+          const backup={players:JSON.parse(JSON.stringify(players)), currentPlayerIndex, leadSuit, spadesBroken};
+          try{
+            currentPlayerIndex=0; leadSuit=null; spadesBroken=false; players=[{hand:[{suit:'♠',rank:'A'},{suit:'♣',rank:'2'}]},{hand:[]},{hand:[]},{hand:[]}];
+            const legals = legalMoves(players[0].hand); console.assert(legals.includes(1) && !legals.includes(0), 'Cannot lead spade before broken when you have clubs');
+            leadSuit='♥'; const lm2 = legalMoves(players[0].hand); console.assert(lm2.every(i=>players[0].hand[i].suit==='♥')||lm2.length===0, 'Must follow hearts');
+            leadSuit=null; spadesBroken=false; players=[{hand:[{suit:'♠',rank:'A'},{suit:'♠',rank:'2'}]},{hand:[]},{hand:[]},{hand:[]}]; const lm3 = legalMoves(players[0].hand); console.assert(lm3.length===2, 'All-spade hand can lead spades');
+          } finally { players=backup.players; currentPlayerIndex=backup.currentPlayerIndex; leadSuit=backup.leadSuit; spadesBroken=backup.spadesBroken; }
+        }
+        console.log('%cSmoke tests passed x'+iterations,'color:green;font-weight:bold');
+      } catch(e){ console.error('Smoke tests failed', e); }
+    }
+
+    // Celebrate
+    function shortCelebrate(team){ if(!team) return; const colors = team==='Blue' ? ['#2563eb','#93c5fd','#1e3a8a'] : ['#dc2626','#fecaca','#7f1d1d']; for(let i=0;i<80;i++){ const p=document.createElement('div'); p.className='confetti'; p.style.left = Math.random()*100+'vw'; p.style.background = colors[Math.floor(Math.random()*colors.length)]; p.style.animationDelay = (Math.random()*0.6)+'s'; p.style.transform = `translateY(-20px) rotate(${Math.random()*360}deg)`; document.body.appendChild(p); setTimeout(()=> p.remove(), 2200); } }
+
+    // Error guard
+    function showFatal(msg){ try{ overlay.innerHTML = `<div style="max-width:680px;background:#fff;color:#111;padding:16px 18px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.4)"><h3 style="margin:0 0 8px 0">Something went wrong</h3><pre style="white-space:pre-wrap;overflow:auto;font-size:.9rem;background:#f8fafc;padding:10px;border-radius:8px;border:1px solid #e2e8f0">${msg}</pre><button class="btn btn-secondary" id="fatalClose">Close</button></div>`; overlay.style.display='flex'; const b=document.getElementById('fatalClose'); if(b) b.onclick=()=>{ overlay.style.display='none'; }; }catch(_){ alert(msg); } }
+    window.addEventListener('error', (e)=>{ showFatal(`${e.message}\n${e.filename}:${e.lineno}:${e.colno}`); });
+    window.addEventListener('unhandledrejection', (e)=>{ showFatal(`Promise rejection: ${e.reason}`); });
+  </script>
+</body>
+</html>
